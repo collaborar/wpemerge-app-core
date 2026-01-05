@@ -29,6 +29,13 @@ class Assets {
 	protected $url = '';
 
 	/**
+	 * App text domain.
+	 *
+	 * @var string
+	 */
+	protected $textdomain = '';
+
+	/**
 	 * Config.
 	 *
 	 * @var Config
@@ -54,13 +61,15 @@ class Assets {
 	 *
 	 * @param string              $path
 	 * @param string              $url
+	 * @param string              $textdomain
 	 * @param Config              $config
 	 * @param Manifest            $manifest
 	 * @param \WP_Filesystem_Base $filesystem
 	 */
-	public function __construct( $path, $url, Config $config, Manifest $manifest, \WP_Filesystem_Base $filesystem ) {
+	public function __construct( $path, $url, $textdomain, Config $config, Manifest $manifest, \WP_Filesystem_Base $filesystem ) {
 		$this->path = MixedType::removeTrailingSlash( $path );
 		$this->url = Url::removeTrailingSlash( $url );
+		$this->textdomain = $textdomain;
 		$this->config = $config;
 		$this->manifest = $manifest;
 		$this->filesystem = $filesystem;
@@ -121,6 +130,29 @@ class Assets {
 	}
 
 	/**
+	 * Generate the absolute for a given asset src.
+	 *
+	 * @param string $src File source
+	 * @return string
+	 */
+	public function generateFilePath( string $src ) {
+		// Normalize both URLs in order to avoid problems with http, https
+		// and protocol-less cases.
+		$src = $this->removeProtocol( $src );
+		$home_url = $this->removeProtocol( WP_CONTENT_URL );
+
+		if ( $this->isExternalUrl( $src, $home_url ) ) {
+			return $src;
+		}
+
+		return MixedType::normalizePath( str_replace(
+			[$home_url, '/'],
+			[WP_CONTENT_DIR, DIRECTORY_SEPARATOR],
+			$src
+		) );
+	}
+
+	/**
 	 * Get the public URL to the app root.
 	 *
 	 * @return string
@@ -159,36 +191,33 @@ class Assets {
 	 * Get the public URL to a generated JS or CSS bundle.
 	 * Handles SCRIPT_DEBUG and hot reloading.
 	 *
-	 * @param string  $name Source basename (no extension).
-	 * @param string  $extension Source extension - '.js' or '.css'.
+	 * @param string  $bundle Bundle file.
 	 * @return string
 	 */
-	public function getBundleUrl( $name, $extension ) {
+	public function getBundleUrl( string $bundle ) {
 		$development = implode( DIRECTORY_SEPARATOR, [ $this->path, 'dist', 'development.json' ] );
 		$is_development = $this->filesystem->exists( $development );
 		$is_hot = false;
-		$is_debug = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
 
 		if ( $is_development ) {
 			$json = json_decode( $this->filesystem->get_contents( $development ) );
 			$is_hot = $json->hot;
 		}
 
-		$url_path = '.css' === $extension ? "styles/{$name}" : $name;
-		$suffix = $is_development || $is_debug ? '' : '.min';
-
 		if ( $is_hot ) {
 			$hot_url = wp_parse_url( $this->config->get( 'development.hotUrl', 'http://localhost/' ) );
 			$hot_port = $this->config->get( 'development.port', 3000 );
 
-			return "${hot_url['scheme']}://{$hot_url['host']}:{$hot_port}/{$url_path}{$suffix}{$extension}";
+			return "{$hot_url['scheme']}://{$hot_url['host']}:{$hot_port}/{$bundle}";
 		}
 
-		return "{$this->getUrl()}/dist/{$url_path}{$suffix}{$extension}";
+		return "{$this->getUrl()}/dist/{$bundle}";
 	}
 
 	/**
 	 * Enqueue a style, dynamically generating a version for it.
+	 * In case of website is RTL, it will try to enqueue the RTL version of
+	 * style (e.g, frontend-rtl.css).
 	 *
 	 * @param  string        $handle
 	 * @param  string        $src
@@ -197,6 +226,13 @@ class Assets {
 	 * @return void
 	 */
 	public function enqueueStyle( $handle, $src, $dependencies = [], $media = 'all' ) {
+		$rtl = str_replace( '.css', '-rtl.css', $src );
+		$file = $this->generateFilePath( $rtl );
+
+		if ( is_rtl() && $this->filesystem->exists( $file ) ) {
+			$src = $rtl;
+		}
+
 		wp_enqueue_style( $handle, $src, $dependencies, $this->generateFileVersion( $src ), $media );
 	}
 
@@ -206,11 +242,23 @@ class Assets {
 	 * @param  string        $handle
 	 * @param  string        $src
 	 * @param  array<string> $dependencies
-	 * @param  boolean       $in_footer
+	 * @param  array|bool|array{ 'strategy': string,'in_footer': bool } $args
 	 * @return void
 	 */
-	public function enqueueScript( $handle, $src, $dependencies = [], $in_footer = false ) {
-		wp_enqueue_script( $handle, $src, $dependencies, $this->generateFileVersion( $src ), $in_footer );
+	public function enqueueScript( $handle, $src, $dependencies = [], $args = [] ) {
+		$file_path = $this->generateFilePath( $src );
+		$assets = str_replace( '.js', '.asset.php', $file_path );
+
+		if ( $this->filesystem->exists( $assets ) ) {
+			[ 'dependencies' => $dependencies, 'version' => $version ] = require_once $assets;
+		}
+
+		wp_enqueue_script( $handle, $src, $dependencies, $version, $args );
+
+		// Load script translation if needed.
+		if ( in_array( 'wp-i18n', $dependencies ) ) {
+			wp_set_script_translations( $handle, $this->textdomain );
+		}
 	}
 
 	/**

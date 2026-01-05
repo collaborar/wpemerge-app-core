@@ -27,6 +27,7 @@ class AppCoreServiceProvider implements ServiceProviderInterface {
 		$this->extendConfig( $container, 'app_core', [
 			'path' => '',
 			'url' => '',
+			'textdomain' => 'default',
 		] );
 
 		$container['wpemerge_app_core.app_core.app_core'] = function( $c ) {
