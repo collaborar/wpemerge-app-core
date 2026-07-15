@@ -9,38 +9,39 @@
 
 namespace WPEmergeAppCore\Assets;
 
-use WPEmerge\ServiceProviders\ServiceProviderInterface;
+use League\Container\ServiceProvider\AbstractServiceProvider;
+use WPEmerge\Application\Configuration;
+use WPEmergeAppCore\Config\Config;
 
 /**
  * Provide assets dependencies.
  *
  * @codeCoverageIgnore
  */
-class AssetsServiceProvider implements ServiceProviderInterface {
-	/**
-	 * {@inheritDoc}
-	 */
-	public function register( $container ) {
-		$container['wpemerge_app_core.assets.manifest'] = function( $c ) {
-			return new Manifest( $c[ WPEMERGE_CONFIG_KEY ]['app_core']['path'] );
-		};
+class AssetsServiceProvider extends AbstractServiceProvider {
 
-		$container['wpemerge_app_core.assets.assets'] = function( $container ) {
-			return new Assets(
-				$container[ WPEMERGE_CONFIG_KEY ]['app_core']['path'],
-				$container[ WPEMERGE_CONFIG_KEY ]['app_core']['url'],
-				$container[ WPEMERGE_CONFIG_KEY ]['app_core']['textdomain'],
-				$container['wpemerge_app_core.config.config'],
-				$container['wpemerge_app_core.assets.manifest'],
-				$container[ WPEMERGE_APPLICATION_FILESYSTEM_KEY ]
-			);
-		};
+	public function provides( string $id ): bool {
+		return in_array( $id, [ Manifest::class, Assets::class ], true );
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function bootstrap( $container ) {
-		// Nothing to bootstrap.
+	public function register(): void {
+		$c = $this->getContainer();
+
+		$c->addShared( Manifest::class, function () use ( $c ) {
+			$path = $c->get( Configuration::class )->get( 'app_core.path', '' );
+			return new Manifest( $path );
+		} );
+
+		$c->addShared( Assets::class, function () use ( $c ) {
+			$config = $c->get( Configuration::class );
+			return new Assets(
+				$config->get( 'app_core.path', '' ),
+				$config->get( 'app_core.url', '' ),
+				$config->get( 'app_core.textdomain', 'default' ),
+				$c->get( Config::class ),
+				$c->get( Manifest::class ),
+				$c->get( \WP_Filesystem_Base::class )
+			);
+		} );
 	}
 }

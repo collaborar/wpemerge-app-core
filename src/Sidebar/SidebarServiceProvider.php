@@ -9,27 +9,20 @@
 
 namespace WPEmergeAppCore\Sidebar;
 
-use WPEmerge\ServiceProviders\ServiceProviderInterface;
+use League\Container\ServiceProvider\AbstractServiceProvider;
 
 /**
  * Provide sidebar dependencies.
  *
  * @codeCoverageIgnore
  */
-class SidebarServiceProvider implements ServiceProviderInterface {
-	/**
-	 * {@inheritDoc}
-	 */
-	public function register( $container ) {
-		$container['wpemerge_app_core.sidebar.sidebar'] = function() {
-			return new Sidebar();
-		};
+class SidebarServiceProvider extends AbstractServiceProvider {
+
+	public function provides( string $id ): bool {
+		return $id === Sidebar::class;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function bootstrap( $container ) {
-		// Nothing to bootstrap.
+	public function register(): void {
+		$this->getContainer()->addShared( Sidebar::class );
 	}
 }

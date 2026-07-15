@@ -9,27 +9,25 @@
 
 namespace WPEmergeAppCore\Avatar;
 
-use WPEmerge\ServiceProviders\ServiceProviderInterface;
+use League\Container\ServiceProvider\AbstractServiceProvider;
+use League\Container\ServiceProvider\BootableServiceProviderInterface;
 
 /**
  * Provide avatar dependencies.
  *
  * @codeCoverageIgnore
  */
-class AvatarServiceProvider implements ServiceProviderInterface {
-	/**
-	 * {@inheritDoc}
-	 */
-	public function register( $container ) {
-		$container['wpemerge_app_core.avatar.avatar'] = function() {
-			return new Avatar();
-		};
+class AvatarServiceProvider extends AbstractServiceProvider implements BootableServiceProviderInterface {
+
+	public function provides( string $id ): bool {
+		return $id === Avatar::class;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function bootstrap( $container ) {
-		$container['wpemerge_app_core.avatar.avatar']->bootstrap();
+	public function boot(): void {
+		$this->getContainer()->get( Avatar::class )->bootstrap();
+	}
+
+	public function register(): void {
+		$this->getContainer()->addShared( Avatar::class );
 	}
 }
