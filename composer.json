@@ -1,5 +1,6 @@
 {
   "name": "collaborar/wpemerge-app-core",
+  "version": "0.18.0",
   "description": "Core tools for the WP Emerge starter theme and plugin.",
   "type": "library",
   "keywords": [],

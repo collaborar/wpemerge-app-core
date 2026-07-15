@@ -9,27 +9,24 @@
 
 namespace WPEmergeAppCore\Config;
 
-use WPEmerge\ServiceProviders\ServiceProviderInterface;
+use League\Container\ServiceProvider\AbstractServiceProvider;
+use WPEmerge\Application\Configuration;
 
 /**
- * Provide assets dependencies.
+ * Provide config dependencies.
  *
  * @codeCoverageIgnore
  */
-class ConfigServiceProvider implements ServiceProviderInterface {
-	/**
-	 * {@inheritDoc}
-	 */
-	public function register( $container ) {
-		$container['wpemerge_app_core.config.config'] = function( $c ) {
-			return new Config( $c[ WPEMERGE_CONFIG_KEY ]['app_core']['path'] );
-		};
+class ConfigServiceProvider extends AbstractServiceProvider {
+
+	public function provides( string $id ): bool {
+		return $id === Config::class;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function bootstrap( $container ) {
-		// Nothing to bootstrap.
+	public function register(): void {
+		$this->getContainer()->addShared( Config::class, function () {
+			$path = $this->getContainer()->get( Configuration::class )->get( 'app_core.path', '' );
+			return new Config( $path );
+		} );
 	}
 }

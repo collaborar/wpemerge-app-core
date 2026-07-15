@@ -9,27 +9,20 @@
 
 namespace WPEmergeAppCore\Image;
 
-use WPEmerge\ServiceProviders\ServiceProviderInterface;
+use League\Container\ServiceProvider\AbstractServiceProvider;
 
 /**
  * Provide image dependencies.
  *
  * @codeCoverageIgnore
  */
-class ImageServiceProvider implements ServiceProviderInterface {
-	/**
-	 * {@inheritDoc}
-	 */
-	public function register( $container ) {
-		$container['wpemerge_app_core.image.image'] = function( $c ) {
-			return new Image( $c[ WPEMERGE_APPLICATION_FILESYSTEM_KEY ] );
-		};
+class ImageServiceProvider extends AbstractServiceProvider {
+
+	public function provides( string $id ): bool {
+		return $id === Image::class;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function bootstrap( $container ) {
-		// Nothing to bootstrap.
+	public function register(): void {
+		$this->getContainer()->addShared( Image::class )->addArguments( [ \WP_Filesystem_Base::class ] );
 	}
 }

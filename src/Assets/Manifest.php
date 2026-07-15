@@ -37,7 +37,7 @@ class Manifest {
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function getJsonPath() {
+	protected function getJsonPath(): string {
 		return MixedType::normalizePath( $this->path . DIRECTORY_SEPARATOR . 'dist' . DIRECTORY_SEPARATOR . 'manifest.json' );
 	}
 

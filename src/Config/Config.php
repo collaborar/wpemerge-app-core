@@ -36,7 +36,7 @@ class Config {
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function getJsonPath() {
+	protected function getJsonPath(): string {
 		return MixedType::normalizePath( $this->path . DIRECTORY_SEPARATOR . 'config.json' );
 	}
 }

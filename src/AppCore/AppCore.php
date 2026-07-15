@@ -10,6 +10,11 @@
 namespace WPEmergeAppCore\AppCore;
 
 use WPEmerge\Application\Application;
+use WPEmergeAppCore\Assets\Assets;
+use WPEmergeAppCore\Avatar\Avatar;
+use WPEmergeAppCore\Config\Config;
+use WPEmergeAppCore\Image\Image;
+use WPEmergeAppCore\Sidebar\Sidebar;
 
 /**
  * Main communication channel with the theme.
@@ -20,59 +25,59 @@ class AppCore {
 	 *
 	 * @var Application
 	 */
-	protected $app = null;
+	protected Application $app;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param Application $app
 	 */
-	public function __construct( $app ) {
+	public function __construct( Application $app ) {
 		$this->app = $app;
 	}
 
 	/**
 	 * Shortcut to \WPEmergeAppCore\Assets\Assets.
 	 *
-	 * @return \WPEmergeAppCore\Assets\Assets
+	 * @return Assets
 	 */
-	public function assets() {
-		return $this->app->resolve( 'wpemerge_app_core.assets.assets' );
+	public function assets(): Assets {
+		return $this->app->resolve( Assets::class );
 	}
 
 	/**
 	 * Shortcut to \WPEmergeAppCore\Avatar\Avatar.
 	 *
-	 * @return \WPEmergeAppCore\Avatar\Avatar
+	 * @return Avatar
 	 */
-	public function avatar() {
-		return $this->app->resolve( 'wpemerge_app_core.avatar.avatar' );
+	public function avatar(): Avatar {
+		return $this->app->resolve( Avatar::class );
 	}
 
 	/**
 	 * Shortcut to \WPEmergeAppCore\Config\Config.
 	 *
-	 * @return \WPEmergeAppCore\Config\Config
+	 * @return Config
 	 */
-	public function config() {
-		return $this->app->resolve( 'wpemerge_app_core.config.config' );
+	public function config(): Config {
+		return $this->app->resolve( Config::class );
 	}
 
 	/**
 	 * Shortcut to \WPEmergeAppCore\Image\Image.
 	 *
-	 * @return \WPEmergeAppCore\Image\Image
+	 * @return Image
 	 */
-	public function image() {
-		return $this->app->resolve( 'wpemerge_app_core.image.image' );
+	public function image(): Image {
+		return $this->app->resolve( Image::class );
 	}
 
 	/**
 	 * Shortcut to \WPEmergeAppCore\Sidebar\Sidebar.
 	 *
-	 * @return \WPEmergeAppCore\Sidebar\Sidebar
+	 * @return Sidebar
 	 */
-	public function sidebar() {
-		return $this->app->resolve( 'wpemerge_app_core.sidebar.sidebar' );
+	public function sidebar(): Sidebar {
+		return $this->app->resolve( Sidebar::class );
 	}
 }

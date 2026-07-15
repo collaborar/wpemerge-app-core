@@ -24,7 +24,7 @@ trait ReadsJsonTrait {
 	 *
 	 * @return string
 	 */
-	abstract protected function getJsonPath();
+	abstract protected function getJsonPath(): string;
 
 	/**
 	 * Load the json file.
